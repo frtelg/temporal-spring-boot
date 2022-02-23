@@ -13,7 +13,8 @@ import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 import io.temporal.worker.WorkerOptions;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -24,10 +25,11 @@ import java.util.List;
 import static com.frtelg.temporal.config.TemporalConfiguration.NAMESPACE;
 
 @Component
-@Slf4j
 public class TemporalWorkerStarter {
     private static final Class<?>[] WORKFLOW_IMPLEMENTATION_TYPES = new Class[] { GreetingWorkflowImpl.class };
     private static final Object[] ACTIVITY_IMPLEMENTATIONS = new Object[] { new GreetingActivitiesImpl(System.out) };
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final WorkflowServiceStubs workflowServiceStubs;
     private final WorkerFactory workerFactory;

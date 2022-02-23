@@ -53,7 +53,7 @@ class GreetingWorkflowIntegrationTest {
 
         var startWorkflowResponseBody = objectMapper.readValue(startWorkflowResponseBodyJson, WorkflowResponse.class);
 
-        var workflowId = startWorkflowResponseBody.getWorkflowId();
+        var workflowId = startWorkflowResponseBody.workflowId();
 
         // Query workflow after start
         var queryWorkflowBeforeTriggerRequest = MockMvcRequestBuilders.get("/workflow/" + workflowId + "/current-name")
@@ -68,7 +68,7 @@ class GreetingWorkflowIntegrationTest {
 
         var queryWorkflowBeforeTriggerResponseBody = objectMapper.readValue(queryWorkflowBeforeTriggerResponseBodyJson, NameFromWorkflowResponse.class);
 
-        assertEquals("Stranger", queryWorkflowBeforeTriggerResponseBody.getName());
+        assertEquals("Stranger", queryWorkflowBeforeTriggerResponseBody.name());
 
         // Trigger workflow
         var triggerWorkflowRequest = MockMvcRequestBuilders.put("/workflow/" + workflowId + "/Telg")
@@ -83,7 +83,7 @@ class GreetingWorkflowIntegrationTest {
 
         var triggerWorkflowResponseBody = objectMapper.readValue(triggerWorkflowResponseBodyJson, WorkflowResponse.class);
 
-        assertEquals(workflowId, triggerWorkflowResponseBody.getWorkflowId());
+        assertEquals(workflowId, triggerWorkflowResponseBody.workflowId());
 
         // Query workflow after trigger
         var queryWorkflowAfterTriggerRequest = MockMvcRequestBuilders.get("/workflow/" + workflowId + "/current-name")
@@ -98,7 +98,7 @@ class GreetingWorkflowIntegrationTest {
 
         var queryWorkflowAfterTriggerResponseBody = objectMapper.readValue(queryWorkflowAfterTriggerResponseBodyJson, NameFromWorkflowResponse.class);
 
-        assertEquals("Telg", queryWorkflowAfterTriggerResponseBody.getName());
+        assertEquals("Telg", queryWorkflowAfterTriggerResponseBody.name());
 
         // Terminate workflow
         var terminateWorkflowRequest = MockMvcRequestBuilders.delete("/workflow/" + workflowId)

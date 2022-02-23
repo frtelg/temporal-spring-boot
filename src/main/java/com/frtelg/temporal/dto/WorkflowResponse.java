@@ -1,14 +1,9 @@
 package com.frtelg.temporal.dto;
 
-import lombok.Value;
-
 import java.util.Optional;
 
-@Value
-public class WorkflowResponse {
-    String workflowId;
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    Optional<String> errorMessage;
+public record WorkflowResponse(String workflowId,
+                               Optional<String> errorMessage) {
 
     public static WorkflowResponse success(String workflowId) {
         return new WorkflowResponse(workflowId, Optional.empty());
