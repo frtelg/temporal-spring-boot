@@ -9,6 +9,7 @@ import io.grpc.StatusRuntimeException;
 import io.temporal.api.workflowservice.v1.DescribeNamespaceResponse;
 import io.temporal.api.workflowservice.v1.ListNamespacesRequest;
 import io.temporal.api.workflowservice.v1.RegisterNamespaceRequest;
+import io.temporal.api.workflowservice.v1.RegisterNamespaceResponse;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
@@ -68,9 +69,10 @@ public class TemporalWorkerStarter {
                 .setWorkflowExecutionRetentionPeriod(Duration.newBuilder().setSeconds(60).build())
                 .build();
 
-        workflowServiceStubs.blockingStub().registerNamespace(request);
+        RegisterNamespaceResponse response = workflowServiceStubs.blockingStub().registerNamespace(request);
         log.info("Successfully registered namespace \"{}\"",
                 NAMESPACE);
+        log.info("Server returned response: {}", response);
     }
 
     private void createWorkers() {

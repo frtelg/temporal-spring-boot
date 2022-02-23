@@ -22,7 +22,7 @@ import java.time.temporal.ChronoUnit;
 @Configuration
 public class TemporalConfiguration {
 
-    static final String NAMESPACE = "test";
+    static final String NAMESPACE = "Example";
 
     @Bean
     @ConditionalOnMissingBean(WorkflowClient.class)

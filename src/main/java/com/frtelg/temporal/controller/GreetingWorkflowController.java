@@ -5,14 +5,20 @@ import com.frtelg.temporal.dto.WorkflowResponse;
 import com.frtelg.temporal.workflow.GreetingWorkflow;
 import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.client.WorkflowClient;
+import io.temporal.client.WorkflowNotFoundException;
 import io.temporal.client.WorkflowOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.function.Supplier;
 
 @RestController
 @RequestMapping("/workflow")
 public class GreetingWorkflowController {
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
     private final WorkflowClient workflowClient;
     private final WorkflowOptions workflowOptions;
 
@@ -34,38 +40,46 @@ public class GreetingWorkflowController {
     @PutMapping("/{workflowId}/{name}")
     public ResponseEntity<WorkflowResponse> changeNameInWorkflow(@PathVariable String workflowId,
                                                                  @PathVariable String name) {
-        GreetingWorkflow workflow = workflowClient.newWorkflowStub(GreetingWorkflow.class, workflowId);
-        String currentName = workflow.getCurrentName();
+        return safeCallWorkflow(() -> {
+            GreetingWorkflow workflow = workflowClient.newWorkflowStub(GreetingWorkflow.class, workflowId);
+            String currentName = workflow.getCurrentName();
 
-        if (currentName.equals(name)) {
-            return ResponseEntity.badRequest()
-                    .body(WorkflowResponse.error(workflowId, String.format("Name already is %s", name)));
-        }
+            if (currentName.equals(name)) {
+                return ResponseEntity.badRequest()
+                        .body(WorkflowResponse.error(workflowId, String.format("Name already is %s", name)));
+            }
 
-        workflow.changeName(name);
-        WorkflowResponse responseBody = WorkflowResponse.success(workflowId);
-
-        return ResponseEntity.ok(responseBody);
+            workflow.changeName(name);
+            return ResponseEntity.ok(WorkflowResponse.success(workflowId));
+        });
     }
 
     @GetMapping("{workflowId}/current-name")
     public ResponseEntity<NameFromWorkflowResponse> getCurrentNameFromWorkflow(@PathVariable String workflowId) {
-        GreetingWorkflow workflow = workflowClient.newWorkflowStub(GreetingWorkflow.class, workflowId);
-        String currentName = workflow.getCurrentName();
-        NameFromWorkflowResponse responseBody = new NameFromWorkflowResponse(currentName, workflowId);
-
-        return ResponseEntity.ok(responseBody);
+        return safeCallWorkflow(() -> {
+            GreetingWorkflow workflow = workflowClient.newWorkflowStub(GreetingWorkflow.class, workflowId);
+            String currentName = workflow.getCurrentName();
+            return ResponseEntity.ok(new NameFromWorkflowResponse(currentName, workflowId));
+        });
     }
 
     @DeleteMapping("/{workflowId}")
     public ResponseEntity<WorkflowResponse> terminateWorkflow(@PathVariable String workflowId) {
-        GreetingWorkflow workflow = workflowClient.newWorkflowStub(GreetingWorkflow.class, workflowId);
-        workflow.terminate();
+        return safeCallWorkflow(() -> {
+            GreetingWorkflow workflow = workflowClient.newWorkflowStub(GreetingWorkflow.class, workflowId);
+            workflow.terminate();
 
-        WorkflowResponse responseBody = WorkflowResponse.success(workflowId);
-
-        return ResponseEntity.ok(responseBody);
+            return ResponseEntity.ok(WorkflowResponse.success(workflowId));
+        });
     }
 
-
+    private <T> ResponseEntity<T> safeCallWorkflow(Supplier<ResponseEntity<T>> workflowCall) {
+        try {
+            return workflowCall.get();
+        } catch (WorkflowNotFoundException e) {
+            log.error("Workflow not found, perhaps workflowId is incorrect or workflow has timed out", e);
+            return ResponseEntity.notFound()
+                    .build();
+        }
+    }
 }
